@@ -1,0 +1,186 @@
+#compdef ollama
+
+_fetch_ollama_models() {
+    local -a models
+    local output="$(ollama list 2>/dev/null | sed 's/:/\\:/g')"
+    if [[ -z "$output" ]]; then
+        _message "no models available or 'ollama list' failed"
+        return 1
+    fi
+    models=("${(@f)$(echo "$output" | awk 'NR>1 {print $1}')}")
+    if [[ ${#models} -eq 0 ]]; then
+        _message "no models found"
+        return 1
+    fi
+    _describe 'model names' models
+}
+
+_fetch_ollama_running_models() {
+    local -a models
+    local output="$(ollama ps 2>/dev/null | sed 's/:/\\:/g')"
+    if [[ -z "$output" ]]; then
+        _message "no running models or 'ollama ps' failed"
+        return 1
+    fi
+    models=("${(@f)$(echo "$output" | awk 'NR>1 {print $1}')}")
+    if [[ ${#models} -eq 0 ]]; then
+        _message "no running models"
+        return 1
+    fi
+    _describe 'running model names' models
+}
+
+_fetch_ollama_launch_integrations() {
+    local -a integrations
+    integrations=(
+        'claude:Claude Code'
+        'cline:Cline'
+        'codex:Codex'
+        'droid:Droid'
+        'opencode:OpenCode'
+        'openclaw:OpenClaw'
+        'pi:Pi'
+        'vscode:VS Code'
+    )
+    _describe 'integrations' integrations
+}
+
+_ollama() {
+    local -a commands
+
+    _arguments -C \
+        '(- *)'{-h,--help}'[Show help]' \
+        '(- *)'{-v,--version}'[Show version information]' \
+        '--nowordwrap[Do not wrap words to the next line automatically]' \
+        '--verbose[Show timings for response]' \
+        '1: :->command' \
+        '*:: :->args'
+
+    case $state in
+        command)
+            commands=(
+                'serve:Start Ollama'
+                'create:Create a model'
+                'show:Show information for a model'
+                'run:Run a model'
+                'stop:Stop a running model'
+                'pull:Pull a model from a registry'
+                'push:Push a model to a registry'
+                'signin:Sign in to ollama.com'
+                'signout:Sign out from ollama.com'
+                'list:List models'
+                'ps:List running models'
+                'cp:Copy a model'
+                'rm:Remove a model'
+                'launch:Launch the Ollama menu or an integration'
+                'help:Help about any command'
+            )
+            _describe -t commands 'ollama command' commands
+        ;;
+        args)
+            case $words[1] in
+                serve)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]'
+                ;;
+                create)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '(-f --file)'{-f+,--file}'[Name of the Modelfile]:file:_files' \
+                        '(-q --quantize)'{-q+,--quantize}'[Quantize model to this level (e.g. q4_K_M)]:level:' \
+                        '--experimental[Enable experimental safetensors model creation]'
+                ;;
+                show)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '--license[Show license of a model]' \
+                        '--modelfile[Show Modelfile of a model]' \
+                        '--parameters[Show parameters of a model]' \
+                        '--system[Show system message of a model]' \
+                        '--template[Show template of a model]' \
+                        '(-v --verbose)'{-v,--verbose}'[Show detailed model information]' \
+                        '*::model:_fetch_ollama_models'
+                ;;
+                run)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '--format[Response format (e.g. json)]:format:' \
+                        '--insecure[Use an insecure registry]' \
+                        '--nowordwrap[Do not wrap words to the next line automatically]' \
+                        '--verbose[Show timings for response]' \
+                        '--keepalive[Duration to keep a model loaded (e.g. 5m)]:duration:' \
+                        '--think=[Enable thinking mode]:mode:(true false high medium low)' \
+                        '--hidethinking[Hide thinking output]' \
+                        '--experimental[Enable experimental agent loop with tools]' \
+                        '--experimental-websearch[Enable web search tool in experimental mode]' \
+                        '--experimental-yolo[Skip all tool approval prompts]' \
+                        '--dimensions[Truncate output embeddings to specified dimension]:dimension:' \
+                        '--truncate[Truncate inputs exceeding context length]' \
+                        '--width[Image width]:width:' \
+                        '--height[Image height]:height:' \
+                        '--steps[Denoising steps]:steps:' \
+                        '--seed[Random seed]:seed:' \
+                        '--negative[Negative prompt]:prompt:' \
+                        '1::model:_fetch_ollama_models'
+                ;;
+                stop)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '1::model:_fetch_ollama_running_models'
+                ;;
+                pull)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '--insecure[Use an insecure registry]' \
+                        '*::model:_fetch_ollama_models'
+                ;;
+                push)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '--insecure[Use an insecure registry]' \
+                        '*::model:_fetch_ollama_models'
+                ;;
+                cp)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '1:source model:_fetch_ollama_models' \
+                        '2:target model:'
+                ;;
+                rm)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '*::models:_fetch_ollama_models'
+                ;;
+                list|ls)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]'
+                ;;
+                ps)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]'
+                ;;
+                launch)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '--model[Model to use]:model:_fetch_ollama_models' \
+                        '--config[Configure without launching]' \
+                        '(-y --yes)'{-y,--yes}'[Automatically answer yes to confirmation prompts]' \
+                        '1::integration:_fetch_ollama_launch_integrations'
+                ;;
+                signin|signout)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]'
+                ;;
+                help)
+                    local -a help_topics
+                    help_topics=(
+                        'serve' 'create' 'show' 'run' 'stop'
+                        'pull' 'push' 'signin' 'signout'
+                        'list' 'ps' 'cp' 'rm' 'launch'
+                    )
+                    _describe 'command' help_topics
+                ;;
+            esac
+        ;;
+    esac
+}
