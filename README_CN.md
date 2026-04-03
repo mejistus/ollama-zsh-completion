@@ -33,7 +33,7 @@
 将插件克隆到自定义插件目录：
 
 ```bash
-git clone https://github.com/<your-username>/ollama-zsh-plugin \
+git clone https://github.com/mejistus/ollama-zsh-plugin \
   ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/ollama
 ```
 
