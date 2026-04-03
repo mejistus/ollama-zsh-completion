@@ -33,7 +33,7 @@ A Zsh completion plugin for [Ollama](https://ollama.com), providing rich tab-com
 Clone into the custom plugins directory:
 
 ```bash
-git clone https://github.com/<your-username>/ollama-zsh-plugin \
+git clone https://github.com/mejistus/ollama-zsh-plugin \
   ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/ollama
 ```
 
